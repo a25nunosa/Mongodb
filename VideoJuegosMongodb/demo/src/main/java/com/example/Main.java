@@ -14,8 +14,6 @@ import static com.example.CRUD.subirSalarioAnalistas;
 
 public class Main {
 
-    
-
     public static void main(String[] args) {
          try (MongoProvider provider = new MongoProvider()) {
             System.out.println("Mongo provider creado");
