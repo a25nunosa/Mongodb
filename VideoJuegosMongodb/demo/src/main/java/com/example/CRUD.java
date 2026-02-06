@@ -10,12 +10,16 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import com.mongodb.client.AggregateIterable;
-import com.mongodb.client.FindIterable;
-import static com.mongodb.client.model.Accumulators.avg;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.model.Accumulators;
 import static com.mongodb.client.model.Aggregates.group;
-import com.mongodb.client.model.Filters;
+import static com.mongodb.client.model.Aggregates.project;
+import static com.mongodb.client.model.Aggregates.sort;
+import com.mongodb.client.model.Projections;
+import static com.mongodb.client.model.Projections.excludeId;
+import static com.mongodb.client.model.Projections.include;
 import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.Updates;
+import static com.mongodb.client.model.Sorts.orderBy;
 
 
 public class CRUD {
@@ -26,150 +30,144 @@ public class CRUD {
         Scanner scanner = new Scanner(System.in);
         System.out.println("\nintroduce nombre");
         String nombre = scanner.nextLine();
-        System.out.println("introduce numero de departmento");
-        int departamento = scanner.nextInt();
-        System.out.println("introduce salario");
-        int salario = scanner.nextInt();
-        scanner.nextLine();
-        System.out.println("introduce fecha de alta");
-        String fechaAlta = scanner.nextLine();
-        System.out.println("introduce oficio");
-        String oficio = scanner.nextLine();
-        System.out.println("introduce comision");
-        int comision = scanner.nextInt();
+        System.out.println("introduce juego");
+        String juego = scanner.nextLine();
+        System.out.println("introduce duracion");
+        int duracion = scanner.nextInt();
+        System.out.println("introduce puntuacion");
+        int puntuacion = scanner.nextInt();
+        System.out.println("introduce nivel");
+        int nivel = scanner.nextInt();
 
         db.jugadores().insertOne(
             new Document()
-            .append("nombre", nombre)
-            .append("departamento", departamento)
-            .append("salario", salario)
-            .append("fechaAlta", fechaAlta)
-            .append("oficio", oficio)
-            .append("comision", comision)
+            .append("jugador", nombre)
+            .append("juego", juego)
+            .append("duracion", duracion)
+            .append("puntuacion", puntuacion)
+            .append("nivel", nivel)
         );
     }
 
-    public static void borrar(){
+    public static void jugadoresYpuntuacionTotal(){
 
         MongoProvider db = new MongoProvider();
 
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("introduce el nombre del empleado que quieres borrar");
-        String nombre = scanner.nextLine();
-        
-        db.jugadores().deleteOne(Filters.eq("nombre", nombre))
-            .getDeletedCount();
-    }
-
-    public static void buscarPorDepartamento(){
-
-        MongoProvider db = new MongoProvider();
-
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("introduce el nombre del empleado que quieres buscar");
-        int departamento = scanner.nextInt();
-        
-        FindIterable<Document> iterDoc = db.jugadores().find(Filters.eq("departamento", departamento));
-        Iterator it = iterDoc.iterator();
-        while (it.hasNext()) {
-            System.out.println(it.next());
-        }
-    }
-
-    public static void buscarEnDepartamentos10y20(){
-
-        MongoProvider db = new MongoProvider();
-        
-        FindIterable<Document> iterDoc = db.jugadores().find(Filters.or(Filters.eq("departamento", 10), Filters.eq("departamento", 20)));
-        Iterator it = iterDoc.iterator();
-        while (it.hasNext()) {
-            System.out.println(it.next());
-        }
-    }
-
-    public static void buscarProfesores1300(){
-
-        MongoProvider db = new MongoProvider();
-        
-        FindIterable<Document> iterDoc = db.jugadores().find(Filters.and(Filters.eq("oficio", "profesor"), Filters.gt("salario", 1300)));
-        Iterator it = iterDoc.iterator();
-        while (it.hasNext()) {
-            System.out.println(it.next());
-        }
-    }
-
-    public static void actualizar(){
-
-        MongoProvider db = new MongoProvider();
-
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("A que empleado quieres cambiarle el nombre");
-        String nombre = scanner.nextLine();
-        System.out.println("Escribe el nuevo nombre");
-        String nombre2 = scanner.nextLine();
-        
-        db.jugadores().updateOne(Filters.eq("nombre", nombre), Updates.set("nombre", nombre2));
-    }
-
-    public static void subirSalarioAnalistas(){
-
-        MongoProvider db = new MongoProvider();
-        
-        db.jugadores().updateMany(Filters.eq("oficio", "analistas"), Updates.inc("salario", 100));
-    }
-
-    public static void decrementarComision(){
-
-        MongoProvider db = new MongoProvider();
-        
-        db.jugadores().updateMany(Filters.gte("comision", 20), Updates.inc("comision", -20));
-    }
-
-    public static void mediaSalarios(){
-
-        MongoProvider db = new MongoProvider();
-
-        List<Bson> media = Arrays.asList(
+        List<Bson> pipeline = Arrays.asList(
                 group(
-                        null,
-                        avg("mediaSalario", "$salario")));
+                        "$jugador",
+                        Accumulators.sum("puntuacionTotal", "$puntuacion")));
 
-        AggregateIterable<Document> iterDoc = db.jugadores().aggregate(media);
+        AggregateIterable<Document> iterDoc = db.jugadores().aggregate(pipeline);
+        MongoCursor<Document> cursor = iterDoc.iterator();
+
+        while (cursor.hasNext()) {
+            Document doc = cursor.next();
+            System.out.println();
+            System.out.println("jugador: " + doc.get("_id") + ", puntuacion total: " + doc.getInteger("puntuacionTotal"));
+        }
+    }
+
+    public static void puntuacionMaximaCadaUno(){
+
+        MongoProvider db = new MongoProvider();
+
+        List<Bson> max = Arrays.asList(
+                group(
+                        "$jugador",
+                        Accumulators.max("puntuacionMaxima", "$puntuacion")));
+
+        AggregateIterable<Document> iterDoc = db.jugadores().aggregate(max);
         Iterator<Document> it = iterDoc.iterator();
 
         while (it.hasNext()) {
             Document doc = it.next();
-            System.out.println("La media de los salarios es: " + doc.getDouble("mediaSalario"));
+            System.out.println();
+            System.out.println("jugador: " + doc.get("_id") + ", puntuacion maxima: " + doc.getInteger("puntuacionMaxima"));
         }
     }
 
-    public static void mediaSalariosPorDepartamento(){
+    public static void partidaMasCorta(){
 
         MongoProvider db = new MongoProvider();
-
-        List<Bson> media = Arrays.asList(
+        
+        List<Bson> min = Arrays.asList(
                 group(
-                        "$departamento",
-                        avg("mediaSalario", "$salario")));
+                        "$juego",
+                        Accumulators.min("partidaMasCorta", "$duracion")));
 
-        AggregateIterable<Document> iterDoc = db.jugadores().aggregate(media);
+        AggregateIterable<Document> iterDoc = db.jugadores().aggregate(min);
         Iterator<Document> it = iterDoc.iterator();
 
         while (it.hasNext()) {
             Document doc = it.next();
-            System.out.println("Departamento: " + doc.getInteger("_id") + ", Media de salarios: " + doc.getDouble("mediaSalario"));
+            System.out.println();
+            System.out.println("juego: " + doc.get("_id") + ", partida mas corta: " + doc.getInteger("partidaMasCorta"));
         }
     }
 
-    public static void empleadoMayorSalario(){
+    public static void ranking(){
 
         MongoProvider db = new MongoProvider();
 
-        Document doc = db.jugadores().find().sort(Sorts.descending("salario")).first();
-        if (doc != null) {
-            System.out.println("Empleado con mayor salario: " + doc.toJson());
-        } else {
-            System.out.println("No se encontraron empleados.");
+        List<Bson> max;
+        max = Arrays.asList(
+                group(
+                        "$jugador",
+                        Accumulators.max("puntuacionMaxima", "$puntuacion")),
+                sort(orderBy(Sorts.descending("puntuacionMaxima"))));
+
+        AggregateIterable<Document> iterDoc = db.jugadores().aggregate(max);
+        Iterator<Document> it = iterDoc.iterator();
+
+        while (it.hasNext()) {
+            Document doc = it.next();
+            System.out.println();
+            System.out.println("jugador: " + doc.get("_id") + ", puntuacion maxima: " + doc.getInteger("puntuacionMaxima"));
         }
     }
+
+    public static void listaSimple(){
+
+        MongoProvider db = new MongoProvider();
+
+        List<Bson> avg;
+        avg = Arrays.asList(
+                project(               
+                Projections.fields(include("jugador","juego", "puntuacion"), excludeId())));
+
+
+        AggregateIterable<Document> iterDoc = db.jugadores().aggregate(avg);
+        Iterator<Document> it = iterDoc.iterator();
+
+        while (it.hasNext()) {
+            Document doc = it.next();
+            System.out.println();
+            System.out.println("jugador: " + doc.get("jugador") + ", juego: " + doc.getString("juego") + ", puntuacion: " + doc.getInteger("puntuacion"));
+        }
+    }
+
+
+    public static void mediaPuntuable(){
+
+        MongoProvider db = new MongoProvider();
+
+        List<Bson> avg;
+        avg = Arrays.asList(
+                group(
+                "$juego",
+                    Accumulators.avg("puntuacionMedia", "$puntuacion")),
+                sort(orderBy(Sorts.descending("puntuacionMedia"))));
+
+        AggregateIterable<Document> iterDoc = db.jugadores().aggregate(avg);
+        Iterator<Document> it = iterDoc.iterator();
+
+        while (it.hasNext()) {
+            Document doc = it.next();
+            System.out.println();
+            System.out.println("juego: " + doc.get("_id") + ", puntuacion media: " + doc.getDouble("puntuacionMedia"));
+        }
+    }
+
+    
 }

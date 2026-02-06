@@ -2,15 +2,13 @@ package com.example;
 
 import java.util.Scanner;
 
-import static com.example.CRUD.actualizar;
 import static com.example.CRUD.añadir;
-import static com.example.CRUD.borrar;
-import static com.example.CRUD.buscarEnDepartamentos10y20;
-import static com.example.CRUD.buscarPorDepartamento;
-import static com.example.CRUD.buscarProfesores1300;
-import static com.example.CRUD.decrementarComision;
-import static com.example.CRUD.mediaSalarios;
-import static com.example.CRUD.subirSalarioAnalistas;
+import static com.example.CRUD.jugadoresYpuntuacionTotal;
+import static com.example.CRUD.listaSimple;
+import static com.example.CRUD.mediaPuntuable;
+import static com.example.CRUD.partidaMasCorta;
+import static com.example.CRUD.puntuacionMaximaCadaUno;
+import static com.example.CRUD.ranking;
 
 public class Main {
 
@@ -27,11 +25,12 @@ public class Main {
         do {
             System.out.println("=== menu principal ===");
             System.out.println("1. añadir");
-            System.out.println("2. buscar por nombre");
-            System.out.println("3. buscar en departamentos 10 y 20");
-            System.out.println("4. borrar");
-            System.out.println("5. actualizar");
-            System.out.println("6. Salir");
+            System.out.println("2. jugadores y puntuacion total");
+            System.out.println("3. puntuaciones maximas");
+            System.out.println("4. partidas mas cortas");
+            System.out.println("5. Ranking");
+            System.out.println("6. lista simple");
+            System.out.println("7. media puntuable");
             System.out.println("=== ============== ===");
 
             opcion = scanner.nextInt();
@@ -41,28 +40,22 @@ public class Main {
                     añadir();
                     break;
                 case 2:
-                    buscarPorDepartamento();
+                    jugadoresYpuntuacionTotal();
                     break;
                 case 3:
-                    buscarEnDepartamentos10y20();
+                    puntuacionMaximaCadaUno();
                     break;
                 case 4:
-                    buscarProfesores1300();
+                    partidaMasCorta();
                     break;
                 case 5:
-                    subirSalarioAnalistas();
+                    ranking();
                     break;
                 case 6:
-                    decrementarComision();
+                    listaSimple();
                     break;
                 case 7:
-                    mediaSalarios();
-                    break;
-                case 8:
-                    borrar();
-                    break;
-                case 9:
-                    actualizar();
+                    mediaPuntuable();
                     break;
                 case 0:
                     System.out.println("programa cerrado");
